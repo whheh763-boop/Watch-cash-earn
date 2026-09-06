@@ -33,6 +33,12 @@ jobs:
             echo '{"project_info":{"project_number":"1234567890","firebase_url":"https://mock.firebaseio.com","project_id":"mock-id","storage_bucket":"mock-id.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:1234567890:android:abcdef123456","android_client_info":{"package_name":"com.aistudio.pocketcash.pcp"}},"oauth_client":[],"api_key":[{"current_key":"MOCK_KEY"}],"services":{"appinvite_service":{"other_platform_oauth_client":[]}}}]}' > app/google-services.json
           fi
 
+      - name: Generate Debug Keystore if missing
+        run: |
+          if [ ! -f "debug.keystore" ]; then
+            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "C=US, O=Android, CN=Android Debug"
+          fi
+
       - name: Disable KSP caching and daemon
         run: |
           echo "org.gradle.jvmargs=-Xmx3072m -Dfile.encoding=UTF-8 -Djava.awt.headless=true" >> gradle.properties
