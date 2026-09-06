@@ -1,16 +1,24 @@
 package com.example.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.model.Country
 import com.example.model.User
+import com.example.model.Transaction
+import com.example.model.FirebaseRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import com.example.model.Transaction
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class MainViewModel : ViewModel() {
-    private val _userState = MutableStateFlow(User(uid = "user123", deviceId = "dev_001"))
+    private val repository = FirebaseRepository()
+    private var currentUid: String = ""
+
+    private val _userState = MutableStateFlow(User())
     val userState: StateFlow<User> = _userState.asStateFlow()
 
     private val _isDarkMode = MutableStateFlow(true)
@@ -19,76 +27,100 @@ class MainViewModel : ViewModel() {
     private val _transactions = MutableStateFlow<List<Transaction>>(emptyList())
     val transactions: StateFlow<List<Transaction>> = _transactions.asStateFlow()
 
+    private val _webViewUrl = MutableStateFlow("")
+    val webViewUrl: StateFlow<String> = _webViewUrl.asStateFlow()
+
+    private val _webViewTitle = MutableStateFlow("")
+    val webViewTitle: StateFlow<String> = _webViewTitle.asStateFlow()
+    
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                currentUid = repository.signInAnonymously()
+                
+                // Observe User Flow
+                launch {
+                    repository.getUserFlow(currentUid).collect { user ->
+                        _userState.value = user
+                    }
+                }
+                
+                // Observe Transactions Flow
+                launch {
+                    repository.getTransactionsFlow(currentUid).collect { txList ->
+                        _transactions.value = txList
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun setWebViewContent(title: String, url: String) {
+        _webViewTitle.value = title
+        _webViewUrl.value = url
+    }
+
     fun toggleTheme() {
         _isDarkMode.value = !_isDarkMode.value
     }
 
     fun updateProfile(name: String, paymentId: String) {
-        _userState.update { it.copy(displayName = name, paymentId = paymentId) }
+        if (currentUid.isNotEmpty()) {
+            viewModelScope.launch(Dispatchers.IO) {
+                repository.updateProfile(currentUid, name, paymentId)
+            }
+        }
     }
 
     fun fetchTransactions() {
-        // Mocking a Firestore fetch response since Firebase Auth isn't fully set up yet
-        val mockData = listOf(
-            Transaction("1", "Math Quiz Reward", 10, true, "Completed", System.currentTimeMillis() - 1000 * 60 * 5),
-            Transaction("2", "Daily Check-in", 50, true, "Completed", System.currentTimeMillis() - 1000 * 60 * 60 * 2),
-            Transaction("3", "Withdrawal (UPI)", 1000, false, "Pending", System.currentTimeMillis() - 1000 * 60 * 60 * 24),
-            Transaction("4", "Captcha Reward", 5, true, "Completed", System.currentTimeMillis() - 1000 * 60 * 60 * 25),
-            Transaction("5", "Referral Bonus", 100, true, "Completed", System.currentTimeMillis() - 1000 * 60 * 60 * 48)
-        )
-        _transactions.value = mockData
+        // Now automatically handled by flow
     }
 
     fun updateCountry(country: Country) {
-        _userState.update { it.copy(country = country) }
+        if (currentUid.isNotEmpty()) {
+            viewModelScope.launch(Dispatchers.IO) {
+                repository.updateCountry(currentUid, country)
+            }
+        }
     }
 
     fun addCoins(amount: Int) {
-        _userState.update { 
-            it.copy(
-                coinBalance = it.coinBalance + amount,
-                lifetimeEarnings = if (amount > 0) it.lifetimeEarnings + amount else it.lifetimeEarnings
-            )
+        if (currentUid.isNotEmpty()) {
+            viewModelScope.launch(Dispatchers.IO) {
+                repository.addCoins(currentUid, amount, "Task Reward")
+            }
         }
     }
     
     fun performDailyCheckIn() {
-        val current = _userState.value
-        if (current.canCheckIn) {
-            _userState.update { 
-                it.copy(
-                    coinBalance = it.coinBalance + 50,
-                    canCheckIn = false
-                ) 
+        if (currentUid.isNotEmpty() && _userState.value.canCheckIn) {
+            viewModelScope.launch(Dispatchers.IO) {
+                repository.performCheckIn(currentUid)
             }
         }
     }
 
     fun useMathQuizAttempt(): Boolean {
-        val current = _userState.value
-        if (current.dailyMathLimit > 0) {
-            _userState.update { 
-                it.copy(
-                    coinBalance = it.coinBalance + 10,
-                    dailyMathLimit = it.dailyMathLimit - 1
-                ) 
+        if (currentUid.isEmpty() || _userState.value.dailyMathLimit <= 0) return false
+        viewModelScope.launch(Dispatchers.IO) {
+            val success = repository.useMathAttempt(currentUid)
+            if (success) {
+                repository.addCoins(currentUid, 10, "Math Quiz Reward")
             }
-            return true
         }
-        return false
+        return true
     }
 
     fun useCaptchaAttempt(): Boolean {
-        val current = _userState.value
-        if (current.dailyCaptchaLimit > 0) {
-            _userState.update { 
-                it.copy(
-                    coinBalance = it.coinBalance + 5,
-                    dailyCaptchaLimit = it.dailyCaptchaLimit - 1
-                ) 
+        if (currentUid.isEmpty() || _userState.value.dailyCaptchaLimit <= 0) return false
+        viewModelScope.launch(Dispatchers.IO) {
+            val success = repository.useCaptchaAttempt(currentUid)
+            if (success) {
+                repository.addCoins(currentUid, 5, "Captcha Reward")
             }
-            return true
         }
-        return false
+        return true
     }
 }

@@ -23,14 +23,19 @@ import com.example.ui.screens.ShoppingDealsScreen
 import com.example.ui.screens.WalletScreen
 import com.example.ui.screens.ProfileScreen
 import com.example.ui.screens.TransactionHistoryScreen
+import com.example.ui.screens.ReferScreen
+import com.example.ui.screens.LeaderboardScreen
 import com.example.ui.screens.SpinWheelScreen
 import com.example.ui.screens.ScratchCardScreen
 import com.example.ui.theme.MyApplicationTheme
 import com.example.viewmodel.MainViewModel
 import com.example.ads.AdsManager
 
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
+    installSplashScreen()
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
     AdsManager.initialize(this)
@@ -64,7 +69,16 @@ fun PocketCashApp() {
                         onNavigateToOfferwall = { navController.navigate("offerwall") },
                         onNavigateToProfile = { navController.navigate("profile") },
                         onNavigateToSpin = { navController.navigate("spin") },
-                        onNavigateToScratch = { navController.navigate("scratch") }
+                        onNavigateToScratch = { navController.navigate("scratch") },
+                        onNavigateToVideo = { navController.navigate("watch_video") },
+                        onNavigateToRefer = { navController.navigate("refer") },
+                        onNavigateToLeaderboard = { navController.navigate("leaderboard") }
+                    )
+                }
+                composable("watch_video") {
+                    com.example.ui.screens.WatchVideoScreen(
+                        viewModel = mainViewModel,
+                        onBack = { navController.popBackStack() }
                     )
                 }
                 composable("tasks") {
@@ -84,7 +98,17 @@ fun PocketCashApp() {
                     ShoppingDealsScreen(onBack = { navController.popBackStack() })
                 }
                 composable("offerwall") {
-                    OfferwallScreen(onBack = { navController.popBackStack() })
+                    OfferwallScreen(
+                        viewModel = mainViewModel,
+                        onNavigateToWebView = { navController.navigate("webview") },
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable("webview") {
+                    com.example.ui.screens.WebViewScreen(
+                        viewModel = mainViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
                 }
                 composable("profile") {
                     ProfileScreen(
@@ -101,6 +125,18 @@ fun PocketCashApp() {
                 }
                 composable("spin") {
                     SpinWheelScreen(
+                        viewModel = mainViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable("refer") {
+                    ReferScreen(
+                        viewModel = mainViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable("leaderboard") {
+                    LeaderboardScreen(
                         viewModel = mainViewModel,
                         onBack = { navController.popBackStack() }
                     )

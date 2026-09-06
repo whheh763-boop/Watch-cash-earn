@@ -21,10 +21,10 @@ data class User(
 )
 
 data class Transaction(
-    val id: String,
-    val title: String,
-    val amount: Int,
-    val isCredit: Boolean, // true for earning, false for withdrawal
-    val status: String, // "Completed", "Pending", "Failed"
-    val timestamp: Long
+    val id: String = "",
+    val title: String = "",
+    val amount: Int = 0,
+    val isCredit: Boolean = true, // true for earning, false for withdrawal
+    val status: String = "", // "Completed", "Pending", "Failed"
+    val timestamp: Long = 0L
 )

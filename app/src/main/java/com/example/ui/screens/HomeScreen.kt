@@ -16,9 +16,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -75,7 +77,10 @@ fun HomeScreen(
     onNavigateToOfferwall: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToSpin: () -> Unit,
-    onNavigateToScratch: () -> Unit
+    onNavigateToScratch: () -> Unit,
+    onNavigateToVideo: () -> Unit,
+    onNavigateToRefer: () -> Unit,
+    onNavigateToLeaderboard: () -> Unit
 ) {
     val userState by viewModel.userState.collectAsState()
     val convertedCurrency = (userState.coinBalance / 1000.0) * userState.country.exchangeRatePer1000
@@ -328,6 +333,13 @@ fun HomeScreen(
                             modifier = Modifier.padding(start = 4.dp)
                         )
                         
+                        TaskCard(
+                            title = "Watch Videos",
+                            subtitle = "Earn coins by watching ads",
+                            icon = Icons.Default.PlayArrow,
+                            iconTint = Color(0xFFEF4444),
+                            onClick = { onNavigateToVideo() }
+                        )
                         TaskCard(
                             title = "Math & Captcha",
                             subtitle = "Solve puzzles for coins",

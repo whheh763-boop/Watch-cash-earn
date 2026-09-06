@@ -12,10 +12,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalUriHandler
 
+import com.example.viewmodel.MainViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OfferwallScreen(onBack: () -> Unit) {
+fun OfferwallScreen(viewModel: MainViewModel, onNavigateToWebView: () -> Unit, onBack: () -> Unit) {
     val uriHandler = LocalUriHandler.current
+    val userState by viewModel.userState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -39,6 +42,16 @@ fun OfferwallScreen(onBack: () -> Unit) {
             Text("Complete surveys and offers to earn big rewards!", style = MaterialTheme.typography.bodyLarge)
             Spacer(modifier = Modifier.height(16.dp))
             
+            ActionCard(
+                title = "CPAlead Offerwall",
+                subtitle = "Complete premium offers",
+                icon = Icons.Default.PlayArrow,
+                onClick = {
+                    val url = "https://www.akamaicdn.org/wall/49bL35o?subid=${userState.uid}"
+                    viewModel.setWebViewContent("CPAlead", url)
+                    onNavigateToWebView()
+                }
+            )
             ActionCard(
                 title = "CPX Research",
                 subtitle = "High paying surveys",
